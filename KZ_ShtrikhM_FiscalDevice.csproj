@@ -99,6 +99,9 @@
       <DependentUpon>ServiceForm_APM.cs</DependentUpon>
     </Compile>
     <Compile Include="ShtrikhTransport.cs" />
+    <Compile Include="SQLConnect.cs" />
+    <Compile Include="StringValue.cs" />
+    <Compile Include="TableContent.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ConfirmationWindow.resx">

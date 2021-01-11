@@ -38,7 +38,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             FPResult fpResult = printer.XReport();
             if (fpResult.Error == 0)
                 OnStatusChangedEvent(true, 0, "Ok");
-            Logger log = new Logger(machineID);
+            Logger log = new Logger("Fiscal Interface", machineID);
             FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
             log.Write($"FDSF: Print X-report. Result: {errorMess}");
             UpdateStatusBoxes();
@@ -51,7 +51,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             FPResult fpResult = printer.ZReport();
             if (fpResult.Error == 0)
                 OnStatusChangedEvent(true, 0, "Ok");
-            Logger log = new Logger(machineID);
+            Logger log = new Logger("Fiscal Interface", machineID);
             FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
             log.Write($"FDSF: Print Z-report. Result: {errorMess}");
             UpdateStatusBoxes();
@@ -108,7 +108,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                     {
                         int.TryParse(txbCashIn.Text, out int sum);
                         FPResult fpResult = printer.CashIn(sum * 100);
-                        Logger log = new Logger(machineID);
+                        Logger log = new Logger("Fiscal Interface", machineID);
                         FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
                         log.Write($"FDSF: CashIn amount {sum}. Result: {errorMess}");
                     }
@@ -126,7 +126,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                     {
                         int.TryParse(txbCashOut.Text, out int sum);
                         FPResult fpResult = printer.CashOut(sum * 100);
-                        Logger log = new Logger(machineID);
+                        Logger log = new Logger("Fiscal Interface", machineID);
                         FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
                         log.Write($"FDSF: CashOut amount {sum}. Result: {errorMess}");
                     }
@@ -185,7 +185,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                     }
                     else
                         printer.VoidReceipt();
-                    Logger log = new Logger(machineID);
+                    Logger log = new Logger("Fiscal Interface", machineID);
                     FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
                     log.Write($"FDSF: Sale amount: {sum}, type: {type}. Result: {errorMess}");
                 }
@@ -201,7 +201,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                     }
                     else
                         printer.VoidReceipt();
-                    Logger log = new Logger(machineID);
+                    Logger log = new Logger("Fiscal Interface", machineID);
                     FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
                     log.Write($"FDSF: Return amount: {sum}, type: {type}. Result: {errorMess}");
                 }
@@ -223,7 +223,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         {
             this.Enabled = false;
             FPResult fpResult = printer.Report(cbxRepSel.SelectedIndex, dateTimePickerFrom.Value.Date, dateTimePickerTo.Value.Date);
-            Logger log = new Logger(machineID);
+            Logger log = new Logger("Fiscal Interface", machineID);
             FPResult.Errors.TryGetValue(fpResult.Error, out string errorMess);
             log.Write($"FDSF: Report by date from {dateTimePickerFrom.Value.Date.ToString("dd.MM.yyyy")} to {dateTimePickerTo.Value.Date.ToString("dd.MM.yyyy")} type: {cbxRepSel.SelectedItem}. Result: {errorMess}");
             this.Enabled = true;

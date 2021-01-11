@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.Timers;
 using System.Collections.Generic;
+using System.IO;
 
 namespace KZ_ShtrikhM_FiscalDevice
 {
@@ -107,7 +108,8 @@ namespace KZ_ShtrikhM_FiscalDevice
         {
             
             MachineID = configuration.DeviceId;
-            Logger log = new Logger(MachineID);
+            CreateFolders();
+            Logger log = new Logger("Fiscal Interface", MachineID);
             log.Write($"FD  : Install: {configuration.CommunicationChannel}");
             inTransaction = true;
             fiscalDeviceConfiguration = configuration;
@@ -186,7 +188,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         public Result OpenTransaction(TransactionData transactionData)
         {
             items = new List<Item>();
-            Logger log = new Logger(MachineID);
+            Logger log = new Logger("Fiscal Interface", MachineID);
             inTransaction = true;
             transaction = transactionData;
             log.Write($"FD  : OpenTransaction Transaction Nr: {transaction.ReferenceId}");
@@ -205,7 +207,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             if (items == null)
                 items = new List<Item>();
             items.Add(item);
-            Logger log = new Logger(MachineID);
+            Logger log = new Logger("Fiscal Interface", MachineID);
             log.Write($"FD  : Add Item totalPrice: {item.TotalPrice}, quantity {item.Quantity}, name {item.Name}");
             return new Result(deviceState.FiscalDeviceReady);
         }
@@ -213,7 +215,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         public Result AddPayment(Payment payment)
         {
             this.payment = payment;
-            Logger log = new Logger(MachineID);
+            Logger log = new Logger("Fiscal Interface", MachineID);
             log.Write($"FD  : Add Payment amount: {payment.Amount}, type: {payment.PaymentType}, name: {payment.Name}");
             return new Result(deviceState.FiscalDeviceReady);
         }
@@ -222,7 +224,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         {
             try
             {
-                Logger log = new Logger(MachineID);
+                Logger log = new Logger("Fiscal Interface", MachineID);
                 {       
                     bool doSale = true;
                     foreach (Item item in items)
@@ -254,6 +256,22 @@ namespace KZ_ShtrikhM_FiscalDevice
                                 }
                                 else
                                 {
+                                    if(payment.PaymentType != PaymentType.Cash)
+                                    {
+                                        SQLConnect sql = new SQLConnect();
+                                        string[] lines = sql.GetTransactionFromDBbyDevice(paymentMachineId, transaction.ReferenceId).Split('\n');
+                                        if (lines.Length > 0)
+                                        {
+                                            foreach (string line in lines)
+                                            {
+                                                fpResult = printer.PrintLine(line);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            fpResult = printer.PrintLine("Банковский чек не может быть распечатан");
+                                        }
+                                    }
                                     if (parkingItem != null)
                                     {
                                         fpResult = printer.PrintLine($"Номер талона: {parkingItem.TicketId}");
@@ -311,7 +329,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             {
                 this.StatusChangedEvent(false, (int)SkiDataErrorCode.DeviceError, $"Исключение: {e.Message}");
                 printer.VoidReceipt();
-                Logger log = new Logger(MachineID);
+                Logger log = new Logger("Fiscal Interface", MachineID);
                 log.Write($"FD  : Close Transaction exception: {e.Message}");
             }
             return new Result(deviceState.FiscalDeviceReady);
@@ -374,7 +392,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             {
                 try
                 {
-                    Logger log = new Logger(MachineID);
+                    Logger log = new Logger("Fiscal Interface", MachineID);
                     fpResult = printer.PrintLine($"Платежная станция: {paymentMachineName}");
                     fpResult = printer.PrintLine($"Источник: {cash.Source}");
                     fpResult = printer.CashIn((int)cash.Amount * 100);
@@ -387,7 +405,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                 catch (Exception e)
                 {
                     this.StatusChangedEvent(false, (int)SkiDataErrorCode.DeviceError, $"Исключение: {e.Message}");
-                    Logger log = new Logger(MachineID);
+                    Logger log = new Logger("Fiscal Interface", MachineID);
                     log.Write($"FD  : CashIn exception: {e.Message}");
                 }
             }
@@ -400,7 +418,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             {
                 try
                 {
-                    Logger log = new Logger(MachineID);
+                    Logger log = new Logger("Fiscal Interface", MachineID);
                     fpResult = printer.PrintLine($"Платежная станция: {paymentMachineName}");
                     fpResult = printer.PrintLine($"Источник: {cash.Source}");
                     fpResult = printer.CashOut((int)cash.Amount * 100);
@@ -413,7 +431,7 @@ namespace KZ_ShtrikhM_FiscalDevice
                 catch (Exception e)
                 {
                     this.StatusChangedEvent(false, (int)SkiDataErrorCode.DeviceError, $"Исключение: {e.Message}");
-                    Logger log = new Logger(MachineID);
+                    Logger log = new Logger("Fiscal Interface", MachineID);
                     log.Write($"FD  : CashOut exception: {e.Message}");
                 }
             }
@@ -422,6 +440,23 @@ namespace KZ_ShtrikhM_FiscalDevice
         #endregion
 
         #region Custom methods
+
+        bool CreateFolders()
+        {
+            if (!Directory.Exists(StringValue.WorkingDirectory))
+            {
+                Directory.CreateDirectory(StringValue.WorkingDirectory);
+            }
+            if (!Directory.Exists($"{StringValue.WorkingDirectory}Log"))
+            {
+                Directory.CreateDirectory($"{StringValue.WorkingDirectory}Log");
+            }
+            if (!Directory.Exists($"{StringValue.WorkingDirectory}FDI"))
+            {
+                Directory.CreateDirectory($"{StringValue.WorkingDirectory}FDI");
+            }
+            return true;
+        }
 
         private void StatusChangedEvent(bool isready, int errorCode, string errorMessage)
         {
@@ -444,7 +479,7 @@ namespace KZ_ShtrikhM_FiscalDevice
 
         public bool ErrorAnalizer(int error)
         {
-            Logger log = new Logger(MachineID);
+            Logger log = new Logger("Fiscal Interface", MachineID);
             log.Write($"FDEA: ErrorAnalizer({error.ToString()})");
             if (!FPResult.Errors.TryGetValue(error, out string errMess))
                 errMess = "NotDefined";

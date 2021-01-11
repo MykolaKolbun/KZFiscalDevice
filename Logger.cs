@@ -7,27 +7,26 @@ namespace KZ_ShtrikhM_FiscalDevice
 {
     class Logger
     {
-        /// <summary>
-        /// Полный путь к лог файлу.
-        /// </summary>
-        //string filePath = "C:\\Log\\FiscalTrace"+DateTime.Now.Date.ToString()+".txt";
-        string filePath = $@"C:\Log\FiscalTrace-{DateTime.Now:yyyy-MM-dd}.txt";
+        string File { get; set; }
+        string Path { get; set; }
 
-        /// <summary>
-        /// Конструктор класса Logger. Создает папку и файл.
-        /// </summary>
-        public Logger(string machineId)
+        public Logger(string fileName, string machineID)
         {
-            filePath = $@"C:\Log\{machineId} FiscalTrace-{DateTime.Now:yyyy-MM-dd}.txt";
-        }
-        public Logger()
-        {
-            filePath = $@"C:\Log\FiscalTrace-{DateTime.Now:yyyy-MM-dd}.txt";
+            this.File = fileName;
+            this.Path = $@"{StringValue.WorkingDirectory}Log\{File}Trace-{machineID} {DateTime.Now:yyyy-MM-dd}.txt";
+
         }
 
-        public Logger(string fileName, string machineId)
+        public void Write(string mess)
         {
-            filePath = $@"C:\Log\{machineId} {fileName}-{DateTime.Now:yyyy-MM-dd}.txt";
+            try
+            {
+                StreamWriter sw = new StreamWriter(Path, true, Encoding.UTF8);
+                string dateTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+                sw.WriteLine("{0}: {1}", dateTime, mess);
+                sw.Close();
+            }
+            catch { }
         }
 
         /// <summary>
@@ -38,7 +37,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         public void logWrite(byte[] mess, bool direction)
         {
             string dir;
-            StreamWriter sw = new StreamWriter(filePath, true, System.Text.Encoding.UTF8);
+            StreamWriter sw = new StreamWriter(Path, true, System.Text.Encoding.UTF8);
             if (direction)
             { dir = ">>"; } // true if to printer
             else { dir = "<<"; } // false if from printer
@@ -49,7 +48,7 @@ namespace KZ_ShtrikhM_FiscalDevice
         public void logWrite(byte mess, bool direction)
         {
             string dir;
-            StreamWriter sw = new StreamWriter(filePath, true, System.Text.Encoding.UTF8);
+            StreamWriter sw = new StreamWriter(Path, true, System.Text.Encoding.UTF8);
             if (direction)
             { dir = ">>"; } // true if to printer
             else { dir = "<<"; } // false if from printer
@@ -67,7 +66,7 @@ namespace KZ_ShtrikhM_FiscalDevice
             //System.Text.Encoding.Default.GetString(mess);
             string dateTime = DateTime.Now.ToString();
             string dir;
-            StreamWriter sw = new StreamWriter(filePath, true, Encoding.UTF8);
+            StreamWriter sw = new StreamWriter(Path, true, Encoding.UTF8);
             if (direction)
             { dir = ">>"; } // true if to printer
             else { dir = "<<"; } // false if from printer
@@ -75,18 +74,10 @@ namespace KZ_ShtrikhM_FiscalDevice
             sw.Close();
         }
 
-        public void Write(string mess)
-        {
-            string dateTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
-            StreamWriter sw = new StreamWriter(filePath, true, Encoding.UTF8);
-            sw.WriteLine($"{dateTime}   {mess}");
-            sw.Close();
-        }
-
         public void Write(byte[] mess)
         {
             string dateTime = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
-            StreamWriter sw = new StreamWriter(filePath, true, Encoding.UTF8);
+            StreamWriter sw = new StreamWriter(Path, true, Encoding.UTF8);
             sw.WriteLine($"{dateTime}   {BitConverter.ToString(mess)}");
             sw.Close();
         }
